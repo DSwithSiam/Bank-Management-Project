@@ -1,7 +1,7 @@
 from django.contrib import admin
 
 # from transactions.models import Transaction
-from .models import Transaction
+from .models import Bankrupt, Transaction
 @admin.register(Transaction)
 class TransactionAdmin(admin.ModelAdmin):
     list_display = ['account', 'amount', 'balance_after_transaction', 'transaction_type', 'loan_approve']
@@ -12,3 +12,4 @@ class TransactionAdmin(admin.ModelAdmin):
         obj.account.save()
         super().save_model(request, obj, form, change)
 
+admin.site.register(Bankrupt)

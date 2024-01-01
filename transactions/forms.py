@@ -1,5 +1,7 @@
 from django import forms
+from accounts.models import UserBankAccount
 from .models import Transaction
+
 class TransactionForm(forms.ModelForm):
     class Meta:
         model = Transaction
@@ -55,7 +57,6 @@ class WithdrawForm(TransactionForm):
                 f'You have {balance} $ in your account. '
                 'You can not withdraw more than your account balance'
             )
-
         return amount
 
 
@@ -65,3 +66,8 @@ class LoanRequestForm(TransactionForm):
         amount = self.cleaned_data.get('amount')
 
         return amount
+
+class TransferMoneyForm(forms.Form):
+    reciver_account = forms.IntegerField()
+    amount = forms.DecimalField()
+    

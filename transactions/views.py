@@ -1,20 +1,22 @@
+from typing import Any
 from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.urls import reverse_lazy
 from django.utils import timezone
-from django.shortcuts import get_object_or_404, redirect
+from django.shortcuts import get_object_or_404, redirect, render
 from django.views import View
-from django.http import HttpResponse
-from django.views.generic import CreateView, ListView
-from transactions.constants import DEPOSIT, WITHDRAWAL,LOAN, LOAN_PAID
+from django.http import HttpRequest, HttpResponse
+from django.views.generic import CreateView, ListView, TemplateView
+from accounts.models import UserBankAccount
 from datetime import datetime
 from django.db.models import Sum
 from transactions.forms import (
     DepositForm,
+    TransferMoneyForm,
     WithdrawForm,
     LoanRequestForm,
 )
-from transactions.models import Transaction
+from transactions.models import Bankrupt, Transaction
 
 class TransactionCreateMixin(LoginRequiredMixin, CreateView):
     template_name = 'transactions/transaction_form.html'
@@ -40,10 +42,10 @@ class TransactionCreateMixin(LoginRequiredMixin, CreateView):
 
 class DepositMoneyView(TransactionCreateMixin):
     form_class = DepositForm
-    title = 'Deposit'
+    title = 'Deposite'
 
     def get_initial(self):
-        initial = {'transaction_type': DEPOSIT}
+        initial = {'transaction_type': 'Deposite'}
         return initial
 
     def form_valid(self, form):
@@ -72,16 +74,24 @@ class WithdrawMoneyView(TransactionCreateMixin):
     title = 'Withdraw Money'
 
     def get_initial(self):
-        initial = {'transaction_type': WITHDRAWAL}
+        initial = {'transaction_type':'Withdrawal'}
         return initial
 
     def form_valid(self, form):
+        bank = Bankrupt.objects.first()
+        if not bank.bankrupt:
+            return redirect('bankrupt')
+    
         amount = form.cleaned_data.get('amount')
+        account = self.request.user.account
+        # account.initial_deposit_date = now
+        account.balance -= amount 
+        account.save(
+            update_fields=[
+                'balance'
+            ]
+        )
 
-        self.request.user.account.balance -= form.cleaned_data.get('amount')
-        # balance = 300
-        # amount = 5000
-        self.request.user.account.save(update_fields=['balance'])
 
         messages.success(
             self.request,
@@ -91,17 +101,21 @@ class WithdrawMoneyView(TransactionCreateMixin):
         return super().form_valid(form)
 
 class LoanRequestView(TransactionCreateMixin):
+    
     form_class = LoanRequestForm
     title = 'Request For Loan'
 
     def get_initial(self):
-        initial = {'transaction_type': LOAN}
+        initial = {'transaction_type': "Loan"}
         return initial
 
     def form_valid(self, form):
+        bank = Bankrupt.objects.first()
+        if bank.bankrupt:
+            return redirect('bankrupt')
         amount = form.cleaned_data.get('amount')
         current_loan_count = Transaction.objects.filter(
-            account=self.request.user.account,transaction_type=3,loan_approve=True).count()
+            account=self.request.user.account,transaction_type='Loan',loan_approve=True).count()
         if current_loan_count >= 3:
             return HttpResponse("You have cross the loan limits")
         messages.success(
@@ -159,7 +173,7 @@ class PayLoanView(LoginRequiredMixin, View):
                 loan.balance_after_transaction = user_account.balance
                 user_account.save()
                 loan.loan_approved = True
-                loan.transaction_type = LOAN_PAID
+                loan.transaction_type = 'Loan Paid'
                 loan.save()
                 return redirect('transactions:loan_list')
             else:
@@ -178,6 +192,76 @@ class LoanListView(LoginRequiredMixin,ListView):
     
     def get_queryset(self):
         user_account = self.request.user.account
-        queryset = Transaction.objects.filter(account=user_account,transaction_type=3)
+        queryset = Transaction.objects.filter(account=user_account,transaction_type= 'Loan')
         print(queryset)
         return queryset
+    
+class TransferMoneyView(View):
+    template_name = 'transactions/transfer_money.html'
+
+    def get(self, request):
+        form = TransferMoneyForm()
+        return render(request, self.template_name, {'form': form})
+
+    def post(self, request):
+        
+        form = TransferMoneyForm(request.POST)
+
+        if form.is_valid():
+            bank = Bankrupt.objects.first()
+            if bank.bankrupt:
+                return redirect('bankrupt')
+            amount = form.cleaned_data['amount']
+            to_user_id = form.cleaned_data['reciver_account']
+            current_user = request.user.account
+            try:
+                to_user = UserBankAccount.objects.get(
+                    account_no=to_user_id)
+                print(to_user)
+                min_balance_to_transfer = 100
+                max_balance_to_transfer = 20000
+
+                
+                current_user.balance -= amount
+                current_user.save()
+                TRANSFER = (
+                    (5,"TRANSFER"),
+                    )
+
+                transaction_from = Transaction.objects.create(
+                    account=current_user,
+                    amount=amount,
+                    balance_after_transaction=current_user.balance,
+                    transaction_type = 'Send', 
+                )
+
+                transaction_to = Transaction.objects.create(
+                    account=to_user,
+                    amount=amount,
+                    balance_after_transaction = to_user.balance,
+                    transaction_type = "Receive",  
+                )
+
+
+                to_user.balance += amount
+                to_user.save()
+
+                messages.success(
+                    request,
+                    f'Transfer of {"{:,.2f}".format(float(amount))}$ successful'
+                )
+              
+
+                
+
+
+            except UserBankAccount.DoesNotExist:
+                messages.error(
+                    request, 'User account not found. Please check the account number.')
+
+            return render(request, 'transactions/transfer_money.html', {'form': form, 'title': 'Transfer Money'})
+        return render(request, self.template_name, {'form': form, 'title': 'Transfer Money'})
+
+class BankruptView(TemplateView):
+    template_name = 'transactions/bankrupt.html'
+    
