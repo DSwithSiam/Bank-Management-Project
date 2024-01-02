@@ -10,6 +10,9 @@ from django.views.generic import CreateView, ListView, TemplateView
 from accounts.models import UserBankAccount
 from datetime import datetime
 from django.db.models import Sum
+from django.core.mail import EmailMultiAlternatives
+from django.template.loader import render_to_string
+from django.utils import timezone
 from transactions.forms import (
     DepositForm,
     TransferMoneyForm,
@@ -17,6 +20,20 @@ from transactions.forms import (
     LoanRequestForm,
 )
 from transactions.models import Bankrupt, Transaction
+
+def ConfarmationEmail(user, to_user,type, subject, amount, template):
+        mail_subject = subject
+        email_massage = render_to_string(template, 
+        {
+            'subject': subject,
+            'type': type,
+            'user': user,             
+            'amount': amount,
+            'datetime': timezone.now()
+        })
+        send_email = EmailMultiAlternatives(mail_subject, "", to = [to_user])
+        send_email.attach_alternative(email_massage, "text/html")
+        send_email.send()
 
 class TransactionCreateMixin(LoginRequiredMixin, CreateView):
     template_name = 'transactions/transaction_form.html'
@@ -66,6 +83,12 @@ class DepositMoneyView(TransactionCreateMixin):
             f'{"{:,.2f}".format(float(amount))}$ was deposited to your account successfully'
         )
 
+        mail_subject = 'Deposit Confirmation'        
+        to_email = self.request.user.email
+        
+        ConfarmationEmail(self.request.user ,to_email, "deposit", mail_subject, amount, 'transactions/confirmation_email.html')
+
+        
         return super().form_valid(form)
 
 
@@ -97,7 +120,10 @@ class WithdrawMoneyView(TransactionCreateMixin):
             self.request,
             f'Successfully withdrawn {"{:,.2f}".format(float(amount))}$ from your account'
         )
-
+        
+        mail_subject = 'Withdrawn Confirmation'        
+        to_email = self.request.user.email
+        ConfarmationEmail(self.request.user ,to_email, "withdraw", mail_subject, amount, 'transactions/confirmation_email.html')
         return super().form_valid(form)
 
 class LoanRequestView(TransactionCreateMixin):
@@ -111,6 +137,7 @@ class LoanRequestView(TransactionCreateMixin):
 
     def form_valid(self, form):
         bank = Bankrupt.objects.first()
+        print(bank)
         if bank.bankrupt:
             return redirect('bankrupt')
         amount = form.cleaned_data.get('amount')
@@ -122,6 +149,11 @@ class LoanRequestView(TransactionCreateMixin):
             self.request,
             f'Loan request for {"{:,.2f}".format(float(amount))}$ submitted successfully'
         )
+        
+        mail_subject = 'Request For Loan Successfully'        
+        to_email = self.request.user.email
+        ConfarmationEmail(self.request.user ,to_email, "Loan", mail_subject, amount, 'transactions/confirmation_email.html')
+
 
         return super().form_valid(form)
     
@@ -251,6 +283,9 @@ class TransferMoneyView(View):
                     f'Transfer of {"{:,.2f}".format(float(amount))}$ successful'
                 )
               
+                mail_subject = 'Transfer successful'        
+                to_email = self.request.user.email
+                ConfarmationEmail(self.request.user ,to_email, "Transfer", mail_subject, amount, 'transactions/confirmation_email.html')
 
                 
 

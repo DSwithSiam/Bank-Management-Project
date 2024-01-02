@@ -1,4 +1,5 @@
 from django.contrib import admin
+from transactions.views import ConfarmationEmail
 
 # from transactions.models import Transaction
 from .models import Bankrupt, Transaction
@@ -11,5 +12,9 @@ class TransactionAdmin(admin.ModelAdmin):
         obj.balance_after_transaction = obj.account.balance
         obj.account.save()
         super().save_model(request, obj, form, change)
+
+        mail_subject = 'Loan_approve'        
+        to_email = request.user.email
+        ConfarmationEmail(request.user ,to_email, "Loan approve", mail_subject, obj.account.balance, 'transactions/loan_email.html')
 
 admin.site.register(Bankrupt)

@@ -4,7 +4,7 @@ from accounts.models import UserBankAccount
 from .constants import TRANSACTION_TYPE
 
 class Bankrupt(models.Model):
-    bankrupt = models.BooleanField(default = True)
+    bankrupt = models.BooleanField(default = False)
 
 class Transaction(models.Model):
     account = models.ForeignKey(UserBankAccount, related_name = 'transactions', on_delete = models.CASCADE) # ekjon user er multiple transactions hote pare
