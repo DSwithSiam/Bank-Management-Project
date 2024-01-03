@@ -84,8 +84,8 @@ class DepositMoneyView(TransactionCreateMixin):
         mail_subject = 'Deposit Confirmation'        
         to_email = self.request.user.email
         
+        
         ConfarmationEmail(self.request.user ,to_email, "deposit", mail_subject, amount, 'transactions/confirmation_email.html')
-
         
         return super().form_valid(form)
 
@@ -284,6 +284,11 @@ class TransferMoneyView(View):
                 mail_subject = 'Transfer successful'        
                 to_email = self.request.user.email
                 ConfarmationEmail(self.request.user ,to_email, "Transfer", mail_subject, amount, 'transactions/confirmation_email.html')
+
+                rec_mail_subject = 'Recive Money' 
+                rec_user = UserBankAccount.objects.get(account_no=to_user_id)
+                rec_email = rec_user.email
+                ConfarmationEmail(rec_user ,rec_email, "Recive", rec_mail_subject, amount, 'transactions/recive_money.html')
 
                 
 
