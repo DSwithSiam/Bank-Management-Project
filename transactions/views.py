@@ -12,6 +12,7 @@ from datetime import datetime
 from django.db.models import Sum
 from django.core.mail import EmailMultiAlternatives
 from django.template.loader import render_to_string
+from django.views.decorators.csrf import csrf_protect
 from django.utils import timezone
 from transactions.forms import (
     DepositForm,
@@ -20,6 +21,7 @@ from transactions.forms import (
     LoanRequestForm,
 )
 from transactions.models import Bankrupt, Transaction
+
 
 def ConfarmationEmail(user, to_user,type, subject, amount, template):
         mail_subject = subject
@@ -56,7 +58,7 @@ class TransactionCreateMixin(LoginRequiredMixin, CreateView):
 
         return context
 
-
+@csrf_protect
 class DepositMoneyView(TransactionCreateMixin):
     form_class = DepositForm
     title = 'Deposite'
@@ -91,7 +93,7 @@ class DepositMoneyView(TransactionCreateMixin):
         
         return super().form_valid(form)
 
-
+@csrf_protect
 class WithdrawMoneyView(TransactionCreateMixin):
     form_class = WithdrawForm
     title = 'Withdraw Money'
