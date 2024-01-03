@@ -6,11 +6,11 @@ from django.urls import reverse_lazy
 from django.contrib.auth.views import LoginView, LogoutView
 from django.views import View
 from django.shortcuts import redirect
-from django.views.decorators.csrf import requires_csrf_token
 
 
 
-@requires_csrf_token
+
+
 class UserRegistrationView(FormView):
     template_name = 'accounts/user_registration.html'
     form_class = UserRegistrationForm
@@ -23,7 +23,7 @@ class UserRegistrationView(FormView):
         print(user)
         return super().form_valid(form) # form_valid function call hobe jodi sob thik thake
     
-@requires_csrf_token
+
 class UserLoginView(LoginView):
     template_name = 'accounts/user_login.html'
     def get_success_url(self):
@@ -36,7 +36,7 @@ class UserLogoutView(LogoutView):
         return reverse_lazy('home')
 
 
-@requires_csrf_token
+
 class UserBankAccountUpdateView(View):
     template_name = 'accounts/profile.html'
 
