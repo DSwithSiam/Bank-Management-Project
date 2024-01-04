@@ -6,7 +6,7 @@
     <div class="text-center"> 
         <h4 class="font-bold text-3xl "> {{request.user.first_name}} {{request.user.last_name}}</h4>
         <a class="mr-2 inline-block font-medium text-sm px-2 py-2 leading-none bg-blue-900 rounded text-white border-white hover:border-transparent hover:text-gray-800 hover:bg-red-700 mt-4 lg:mt-0" href="{% url 'edit_profile'  %}">Update Profile</a>       
-        <a class="mr-2 inline-block font-medium text-sm px-2 py-2 leading-none bg-blue-900 rounded text-white border-white hover:border-transparent hover:text-gray-800 hover:bg-red-700 mt-4 lg:mt-0" href="">Forget Password</a>       
+        <a class="mr-2 inline-block font-medium text-sm px-2 py-2 leading-none bg-blue-900 rounded text-white border-white hover:border-transparent hover:text-gray-800 hover:bg-red-700 mt-4 lg:mt-0" href="{% url 'user_pass_change' request.user.id %}">Forget Password</a>       
    
         <br>
         

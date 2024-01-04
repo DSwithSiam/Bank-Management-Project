@@ -1,12 +1,15 @@
+from django.contrib import messages
 from django.shortcuts import render
 from django.views.generic import FormView
+
+from transactions.views import ConfarmationEmail
 from .forms import UserRegistrationForm,UserUpdateForm
 from django.contrib.auth import login, logout
 from django.urls import reverse_lazy
-from django.contrib.auth.views import LoginView, LogoutView
+from django.contrib.auth.views import LoginView, LogoutView, PasswordChangeView
 from django.views import View
 from django.shortcuts import redirect
-
+from django.contrib.auth.mixins import LoginRequiredMixin
 
 
 
@@ -29,7 +32,7 @@ class UserLoginView(LoginView):
     def get_success_url(self):
         return reverse_lazy('home')
 
-class UserLogoutView(LogoutView):
+class UserLogoutView(LoginRequiredMixin, LogoutView):
     def get_success_url(self):
         if self.request.user.is_authenticated:
             logout(self.request)
@@ -37,7 +40,7 @@ class UserLogoutView(LogoutView):
 
 
 
-class UserBankAccountUpdateView(View):
+class UserBankAccountUpdateView(LoginRequiredMixin, View):
     template_name = 'accounts/edit_profile.html'
 
     def get(self, request):
@@ -52,12 +55,33 @@ class UserBankAccountUpdateView(View):
         return render(request, self.template_name, {'form': form})
 
 
-class UserBankAccountView(View):
+class UserBankAccountView(LoginRequiredMixin, View):
     template_name = 'accounts/profile.html'
 
     def get(self, request):
         user = self.request.user
         return render(request, self.template_name, {'user': user})
 
+
+class UserPasswordChange(LoginRequiredMixin, PasswordChangeView):
+    template_name = 'accounts/pass_change.html'
+    success_url = reverse_lazy('profile')
+    pk_url_kwarg = 'pk'
+    def post(self, request, *args, **kwargs):
+        form = self.get_form()
+        user = self.request.user
+        if form.is_valid():
+            login(self.request, user)
+            messages.success(
+                    request,
+                    f'Password has been successfully changed'
+                )
+            mail_subject = 'Password has been successfully changed'        
+            to_email = self.request.user.email
+            ConfarmationEmail(self.request.user ,to_email, "Transfer", mail_subject, 0, 'accounts/pass_change_email.html')
+
+            return self.form_valid(form)
+        else:
+            return self.form_invalid(form)
     
     
