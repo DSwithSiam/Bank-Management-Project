@@ -22,7 +22,7 @@ from transactions.forms import (
 from transactions.models import Bankrupt, Transaction
 
 
-def ConfarmationEmail(user, to_user,type, subject, amount, template):
+def ConfarmationEmail(user, to_user, type, subject, amount, template):
         mail_subject = subject
         email_massage = render_to_string(template, 
         {
