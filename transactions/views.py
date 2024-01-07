@@ -100,9 +100,8 @@ class WithdrawMoneyView(TransactionCreateMixin):
 
     def form_valid(self, form):
         bank = Bankrupt.objects.first()
-        if not bank.bankrupt:
+        if bank.bankrupt:
             return redirect('bankrupt')
-    
         amount = form.cleaned_data.get('amount')
         account = self.request.user.account
         # account.initial_deposit_date = now
