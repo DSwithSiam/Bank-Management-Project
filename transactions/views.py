@@ -287,7 +287,7 @@ class TransferMoneyView(View):
 
                 rec_mail_subject = 'Recive Money' 
                 rec_user = UserBankAccount.objects.get(account_no=to_user_id)
-                rec_email = rec_user.email
+                rec_email = rec_user.user.email
                 ConfarmationEmail(rec_user ,rec_email, "Recive", rec_mail_subject, amount, 'transactions/recive_money.html')
 
                 

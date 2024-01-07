@@ -1,19 +1,30 @@
-{% extends 'base.html' %} {% load static %} {% block head_title %}Banking System{% endblock %} {% block content %} {% if form.non_field_errors %} {% for error in form.non_field_errors %}
+{% extends 'base.html' %}
+{% load static %}
 
-{% endfor %} {% endif %}
-<div class="bg-white px-3 py-4  rounded-xl my-6">
+{% block head_title %}Banking System{% endblock %}
 
-    <div class="text-center"> 
-        <h4 class="font-bold text-3xl "> {{request.user.first_name}} {{request.user.last_name}}</h4>
-        <a class="mr-2 inline-block font-medium text-sm px-2 py-2 leading-none bg-blue-900 rounded text-white border-white hover:border-transparent hover:text-gray-800 hover:bg-red-700 mt-4 lg:mt-0" href="{% url 'edit_profile'  %}">Update Profile</a>       
-        <a class="mr-2 inline-block font-medium text-sm px-2 py-2 leading-none bg-blue-900 rounded text-white border-white hover:border-transparent hover:text-gray-800 hover:bg-red-700 mt-4 lg:mt-0" href="{% url 'user_pass_change' request.user.id %}">Forget Password</a>       
-   
-        <br>
-        
-        <b class=" pb-5">Account NO: {{request.user.account.account_no}}</b></br>
-        <b class=" pb-5">Balance: {{request.user.account.balance}}</b> 
-    
+{% block content %}
+    {% if form.non_field_errors %}
+        {% for error in form.non_field_errors %}
+            {# Display form non-field errors here if needed #}
+        {% endfor %}
+    {% endif %}
+
+    <div class="bg-white px-3 py-4 rounded-xl my-6">
+
+        <div class="text-center">
+            <img src="{% if request.user.profile.picture %}{{ request.user.profile.picture.url }}{% else %} https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcT0ablvNoAMTxtDwRDwbeUyju4uubIZwb8qUh5EwsETFVaB4FglswUWy9xbgPuX4fLLhn8&usqp=CAU {% endif %}" alt="Profile Picture" class="rounded-full w-16 h-16 mx-auto mb-4">
+            <h4 class="font-bold text-3xl">{{ request.user.get_full_name }}</h4>
+
+            <div class="mt-4">
+                <a class="inline-block font-medium text-sm px-2 py-2 leading-none bg-blue-900 rounded text-white border-white hover:border-transparent hover:text-gray-800 hover:bg-red-700 mt-2 lg:mt-0" href="{% url 'edit_profile' %}">Update Profile</a>
+                <a class="inline-block font-medium text-sm px-2 py-2 leading-none bg-blue-900 rounded text-white border-white hover:border-transparent hover:text-gray-800 hover:bg-red-700 mt-2 lg:mt-0" href="{% url 'user_pass_change' request.user.id %}">Change Password</a>
+            </div>
+
+            <div class="mt-4">
+                <b class="block pb-2">Account NO: {{ request.user.account.account_no }}</b>
+                <b class="block pb-2">Balance: {{ request.user.account.balance }}</b>
+            </div>
+        </div>
     </div>
-</div>
-</div>
 {% endblock %}
